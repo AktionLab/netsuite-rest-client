@@ -6,8 +6,6 @@ module Netsuite
 
   class Client
 
-    DEFAULT_SCRIPT_ID             = 13
-    DEFAULT_DEPLOY_ID             = 1
     DEFAULT_GET_RECORD_BATCH_SIZE = 10000
     DEFAULT_SEARCH_BATCH_SIZE     = 1000
     DEFAULT_RETRY_LIMIT           = 5
@@ -19,30 +17,39 @@ module Netsuite
     attr_accessor :headers, :request_timeout, :rest_script_id,
                   :search_script_id, :rest_deploy_id, :search_deploy_id
 
-    def initialize(account_id, login, password, role_id, options={})
+    # Sets up the client with a configuration including auth and other options
+    #
+    # account - the account ID
+    # email   - the accoutn email for login
+    # password - the account password
+    # role_id  - the account role id to auth with
+    # rest_script_id - the netsuite id for the script
+    # rest_deploy_id - the netsuite id for the deployment
+    # sandbox        - boolean as to whether we're using the sandbox or not
+    def initialize(config)
       super()
 
-      auth_string       = "NLAuth nlauth_account=#{account_id}," +
-                          "nlauth_email=#{URI.escape(login, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))}," +
-                          "nlauth_signature=#{password}," +
-                          "nlauth_role=#{role_id}"
+      auth_string       = "NLAuth nlauth_account=#{config[:account]}," +
+                          "nlauth_email=#{URI.escape(config[:email], Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))}," +
+                          "nlauth_signature=#{config[:password]}," +
+                          "nlauth_role=#{config[:role_id]}"
 
       @headers          = { :authorization  => auth_string,
                             :content_type   => "application/json" }
 
-      @cookies          = { "NS_VER" => "2011.2.0" }
+      @cookies          = { "NS_VER" => "2013.2.0" }
 
-      @timeout          = options[:timeout] || DEFAULT_REQUEST_TIMEOUT
+      @timeout          = config[:timeout] || DEFAULT_REQUEST_TIMEOUT
 
-      @script_id   = options[:rest_script_id] || DEFAULT_SCRIPT_ID
-      @deploy_id   = options[:rest_deploy_id] || DEFAULT_DEPLOY_ID
+      @script_id   = config[:rest_script_id]
+      @deploy_id   = config[:rest_deploy_id]
 
-      @get_record_batch_size = options[:get_record_batch_size] || DEFAULT_GET_RECORD_BATCH_SIZE
-      @search_batch_size     = options[:search_batch_size]     || DEFAULT_SEARCH_BATCH_SIZE
+      @get_record_batch_size = config[:get_record_batch_size] || DEFAULT_GET_RECORD_BATCH_SIZE
+      @search_batch_size     = config[:search_batch_size]     || DEFAULT_SEARCH_BATCH_SIZE
 
-      @retry_limit = options[:retry_limit] || DEFAULT_RETRY_LIMIT
+      @retry_limit = config[:retry_limit] || DEFAULT_RETRY_LIMIT
 
-      @sandbox = options[:sandbox]
+      @sandbox = config[:sandbox]
     end
 
     def initialize_record(record_type)
